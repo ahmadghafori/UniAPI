@@ -22,23 +22,13 @@
             /// </summary>
             public required ApiProtocol Protocol { get; set; } = ApiProtocol.Rest;
 
-            /// <summary>
-            /// HTTP method for REST and base for other protocols
-            /// 
-            /// Internal mapping rules:
-            /// - REST: the HttpMethod value is used directly
-            /// - GraphQL:
-            ///     - GET => Query
-            ///     - POST, PUT, DELETE, PATCH => Mutation
-            /// - gRPC: behavior depends on the method implementation; this value has no direct effect
-            /// </summary>
-            public required HttpMethod Method { get; set; } = HttpMethod.Post;
 
             /// <summary>
             /// Base URL of the server (e.g., https://api.example.com)
             /// Required if Config.BaseUrl is not provided.
             /// </summary>
             public required string BaseUrl { get; set; }
+
 
 
 

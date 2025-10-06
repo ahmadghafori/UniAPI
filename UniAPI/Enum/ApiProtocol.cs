@@ -1,6 +1,6 @@
 ﻿public enum ApiProtocol
 {
-    Rest,
-    GraphQL,
-    Grpc
+    Rest = 1,
+    GraphQL = 2,
+    Grpc = 3
 }

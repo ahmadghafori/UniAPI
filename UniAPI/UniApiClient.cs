@@ -11,10 +11,32 @@ namespace UniAPI
     {
         private string CombineUrl(string baseUrl, string? path)
         {
-            if(path is not null)
-                return baseUrl.TrimEnd('/') + "/" + path.TrimStart('/');
+            if (path is not null)
+                return $"{baseUrl.TrimEnd('/')}/{path.TrimStart('/')}";
 
-            return baseUrl;
+            return baseUrl ;
+        }
+
+
+        public async Task<UniResponse<TResponse>> Post<TRequest, TResponse>(UniRequest<TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+                throw new InvalidOperationException("BaseUrl must be specified in request or config.");
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+
+                    }
+            }
+
+            throw new NotImplementedException();
         }
 
         /// <summary>
