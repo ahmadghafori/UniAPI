@@ -1,55 +1,83 @@
 ﻿namespace UniAPI
 {
-    public class UniRequest<TRequest>
+    namespace UniAPI
     {
         /// <summary>
-        /// مسیر یا Query
-        /// - برای REST: endpoint مثل "/users"
-        /// - برای GraphQL: متن Query/Mutation
-        /// - برای gRPC: اسم متد
-        /// </summary>
-        public string PathOrQuery { get; set; } = "";
-
-        /// <summary>
-        /// Payload اصلی
-        /// - برای REST: body
-        /// - برای GraphQL: متغیرها (variables)
-        /// - برای gRPC: message object
-        /// </summary>
-        public TRequest? Body { get; set; }
-
-        /// <summary>
-        /// پارامترها
-        /// - برای REST: به QueryString اضافه میشه
-        /// - برای GraphQL: به عنوان Variables map میشه
-        /// - برای gRPC: می‌تونه Metadata یا input باشه
-        /// </summary>
-        public Dictionary<string, object>? Parameters { get; set; }
-
-        /// <summary>
-        /// هدرها
-        /// - برای REST: مستقیم به HttpClient headers اضافه میشه
-        /// - برای GraphQL: به HttpHeaders اضافه میشه
-        /// - برای gRPC: به Metadata اضافه میشه
-        /// </summary>
-        public Dictionary<string, string>? Headers { get; set; }
-
-        /// <summary>
-        /// نوع متد HTTP برای REST و مبنا برای دیگر پروتکل‌ها
+        /// Represents a unified request for multiple API protocols (REST, GraphQL, gRPC).
         /// 
-        /// قوانین Mapping داخلی:
-        /// - REST: مقادیر HttpMethodType مستقیماً استفاده می‌شوند.
-        /// - GraphQL:
-        ///     - GET => Query
-        ///     - POST, PUT, DELETE, PATCH => Mutation
-        /// - gRPC: به رفتار خود تابع بستگی داره و این مقدار هیچ کاربردی درون GRPC ندارد
+        /// This class allows you to send requests using a single model, while internally mapping
+        /// the request to the appropriate protocol format:
+        /// - REST: uses HttpMethod directly, parameters go to query string, body is request payload
+        /// - GraphQL: GET maps to Query, other HTTP methods map to Mutation; variables come from Parameters
+        /// - gRPC: method name and message object are used; Metadata can include headers or parameters
+        /// 
+        /// You can configure per-request settings such as Timeout, Retry, Logging, and handle errors
+        /// using the optional OnError callback.
         /// </summary>
-        public HttpMethod Method { get; set; } = HttpMethod.Post;
+        /// <typeparam name="TRequest">Type of the request payload</typeparam>
+        public class UniRequest<TRequest>
+        {
+            /// <summary>
+            /// Select the protocol to use for this request.
+            /// </summary>
+            public required ApiProtocol Protocol { get; set; } = ApiProtocol.Rest;
 
-        /// <summary>
-        /// تنظیمات درخواست (Timeout, Retry, Logging, ...)
-        /// </summary>
-        public UniRequestConfig? Config { get; set; }
+            /// <summary>
+            /// HTTP method for REST and base for other protocols
+            /// 
+            /// Internal mapping rules:
+            /// - REST: the HttpMethod value is used directly
+            /// - GraphQL:
+            ///     - GET => Query
+            ///     - POST, PUT, DELETE, PATCH => Mutation
+            /// - gRPC: behavior depends on the method implementation; this value has no direct effect
+            /// </summary>
+            public required HttpMethod Method { get; set; } = HttpMethod.Post;
+
+            /// <summary>
+            /// Base URL of the server (e.g., https://api.example.com)
+            /// Required if Config.BaseUrl is not provided.
+            /// </summary>
+            public required string BaseUrl { get; set; }
+
+
+
+            /// <summary>
+            /// Path or Query string
+            /// - REST: endpoint path, e.g., "/users"
+            /// - GraphQL: Query or Mutation text
+            /// - gRPC: method name, e.g., "UserService/GetUser"
+            /// </summary>
+            public string? PathOrQuery { get; set; } = "";
+
+            /// <summary>
+            /// Main payload
+            /// - REST: request body
+            /// - GraphQL: variables map
+            /// - gRPC: request message object
+            /// </summary>
+            public TRequest? Body { get; set; }
+
+            /// <summary>
+            /// Parameters
+            /// - REST: added to query string
+            /// - GraphQL: mapped as variables
+            /// - gRPC: can be used as metadata or input
+            /// </summary>
+            public Dictionary<string, object>? Parameters { get; set; }
+
+            /// <summary>
+            /// Headers
+            /// - REST: added to HttpClient headers
+            /// - GraphQL: added to HTTP headers
+            /// - gRPC: added to Metadata
+            /// </summary>
+            public Dictionary<string, string>? Headers { get; set; }
+
+            /// <summary>
+            /// Request configuration (Timeout, Retry, Logging, etc.)
+            /// </summary>
+            public UniRequestConfig<TRequest>? Config { get; set; }
+        }
     }
-
 }
