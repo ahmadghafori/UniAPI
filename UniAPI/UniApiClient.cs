@@ -1,8 +1,10 @@
-﻿using System;
+﻿using PortocolService;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UniAPI.PortocolService;
 using UniAPI.UniAPI;
 
 namespace UniAPI
@@ -18,11 +20,18 @@ namespace UniAPI
         }
 
 
-        public async Task<UniResponse<TResponse>> Post<TRequest, TResponse>(UniRequest<TRequest> request)
+        public async Task<UniResponse<TResponse>> Post<TResponse, TRequest>(UniRequest<TRequest> request)
         {
             var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
             if (string.IsNullOrWhiteSpace(baseUrl))
-                throw new InvalidOperationException("BaseUrl must be specified in request or config.");
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
 
             var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
 
@@ -32,32 +41,398 @@ namespace UniAPI
             {
                 case ApiProtocol.Rest:
                     {
-
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Post,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = request.Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        return result;
                     }
             }
 
-            throw new NotImplementedException();
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
+
+        public async Task<UniResponse<TResponse>> Put<TResponse, TRequest>(UniRequest<TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Put,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = request.Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        return result;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
+
+        public async Task<UniResponse<TResponse>> Delete<TResponse, TRequest>(UniRequest<TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Delete,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = request.Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        return result;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
         }
 
         /// <summary>
-        /// Unified API client to handle REST, GraphQL, and gRPC requests.
+        /// REST protocol does not support sending a body. Even if one is provided, it will be ignored.
         /// </summary>
-        public async Task<UniResponse<TResponse>> SendAsync<TRequest,TResponse>(UniRequest<TRequest> request)
+        /// <typeparam name="TRequest"></typeparam>
+        /// <typeparam name="TResponse"></typeparam>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        public async Task<UniResponse<TResponse>> Get<TResponse,TRequest>(UniRequest<TRequest> request)
         {
-            // Determine final BaseUrl
             var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
             if (string.IsNullOrWhiteSpace(baseUrl))
-                throw new InvalidOperationException("BaseUrl must be specified in request or config.");
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
 
-            var fullPath = CombineUrl(baseUrl,request.PathOrQuery);
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
 
-            // TODO: Implement sending logic for REST / GraphQL / gRPC
-            // Apply Config (Timeout, Retry, Logging)
-            // Map response to UniResponse<TResponse>
-            // Invoke OnError if failure
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Get,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Protocol = request.Protocol,
+                            Config = request.Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        return result;
+                    }
+            }
 
-            throw new NotImplementedException();
+            if(request.Config?.OnError is not null)
+
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
         }
 
+
+
+        public async Task<UniResponse<TResponse>> Post<TResponse, TRequest>(UniRequest<TResponse,TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            var Config = new UniRequestConfig<TRequest>();
+            if(request.Config is not null)
+            {
+                Config.EnableLogging = request.Config.EnableLogging;
+                Config.RetryDelay = request.Config.RetryDelay;
+                Config.Timeout = request.Config.Timeout;
+                Config.RetryCount = request.Config.RetryCount;
+            }
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse,TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Post,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        break;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
+
+        public async Task<UniResponse<TResponse>> Put<TResponse, TRequest>(UniRequest<TResponse,TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            var Config = new UniRequestConfig<TRequest>();
+            if (request.Config is not null)
+            {
+                Config.EnableLogging = request.Config.EnableLogging;
+                Config.RetryDelay = request.Config.RetryDelay;
+                Config.Timeout = request.Config.Timeout;
+                Config.RetryCount = request.Config.RetryCount;
+            }
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Put,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        break;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
+
+        public async Task<UniResponse<TResponse>> Delete<TResponse, TRequest>(UniRequest<TResponse,TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            var Config = new UniRequestConfig<TRequest>();
+            if (request.Config is not null)
+            {
+                Config.EnableLogging = request.Config.EnableLogging;
+                Config.RetryDelay = request.Config.RetryDelay;
+                Config.Timeout = request.Config.Timeout;
+                Config.RetryCount = request.Config.RetryCount;
+            }
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Delete,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Body = request.Body,
+                            Protocol = request.Protocol,
+                            Config = Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        break;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
+
+        /// <summary>
+        /// REST protocol does not support sending a body. Even if one is provided, it will be ignored.
+        /// </summary>
+        public async Task<UniResponse<TResponse>> Get<TResponse, TRequest>(UniRequest<TResponse,TRequest> request)
+        {
+            var baseUrl = request.BaseUrl ?? request.Config?.BaseUrl;
+            if (string.IsNullOrWhiteSpace(baseUrl))
+            {
+                return new UniResponse<TResponse>
+                {
+                    StatusCode = 500,
+                    Success = false,
+                    Error = $"Request failed: BaseUrl is null"
+                };
+            }
+
+            var fullPath = CombineUrl(baseUrl, request.PathOrQuery);
+
+            var Config = new UniRequestConfig<TRequest>();
+            if (request.Config is not null)
+            {
+                Config.EnableLogging = request.Config.EnableLogging;
+                Config.RetryDelay = request.Config.RetryDelay;
+                Config.Timeout = request.Config.Timeout;
+                Config.RetryCount = request.Config.RetryCount;
+            }
+
+            //ApiProtocol
+
+            switch (request.Protocol)
+            {
+                case ApiProtocol.Rest:
+                    {
+                        var restservice = new RestService();
+                        var result = await restservice.Send<TResponse, TRequest>(new RestRequest<TRequest>
+                        {
+                            Method = HttpMethod.Get,
+                            BaseUrl = baseUrl + request.PathOrQuery,
+                            Protocol = request.Protocol,
+                            Config = Config,
+                            Files = request.Files,
+                            Headers = request.Headers,
+                            Parameters = request.Parameters,
+                            PathOrQuery = request.PathOrQuery
+                        });
+                        break;
+                    }
+            }
+
+            return new UniResponse<TResponse>
+            {
+                StatusCode = 500,
+                Success = false,
+                Error = $"Request failed: Not finde ApiProtocol"
+            };
+        }
     }
 }

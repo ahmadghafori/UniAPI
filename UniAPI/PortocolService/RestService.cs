@@ -1,7 +1,7 @@
-﻿using System.Net.Http.Headers;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using UniAPI.UniAPI;
+using UniAPI;
+using UniAPI.PortocolService;
 
 namespace PortocolService
 {
@@ -9,30 +9,31 @@ namespace PortocolService
     {
         private HttpClient httpClient = new HttpClient();
 
-        public async Task<UniRequest<TRequest>> Send<TResult, TRequest>(UniRequest<TRequest> request) where TResult : class 
+        public async Task<UniResponse<TResult>> Send<TResult, TRequest>(RestRequest<TRequest> request)
         {
-            try
-            {
-                var uri = BuildUri(request.Endpoint, request.Paramet);
-                using var httpRequest = new HttpRequestMessage(request.Method, uri);
+            var uri = BuildUri(request.BaseUrl, request.Parameters);
+            using var httpRequest = new HttpRequestMessage(request.Method, uri);
 
-                if (request.Headers != null)
+            if (request.Headers != null)
+            {
+                foreach (var h in request.Headers)
                 {
-                    foreach (var h in request.Headers)
+                    if (!httpRequest.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString()))
                     {
-                        if (!httpRequest.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString()))
-                        {
-                            if (httpRequest.Content != null)
-                                httpRequest.Content.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString());
-                        }
+                        if (httpRequest.Content != null)
+                            httpRequest.Content.Headers.TryAddWithoutValidation(h.Key, h.Value.ToString());
                     }
                 }
+            }
 
+            if (request.Method != HttpMethod.Get)
+            {
                 if (request.Files != null && request.Files.Any())
                 {
                     var content = new MultipartFormDataContent();
 
                     // JSON body
+
                     if (request.Body != null)
                     {
                         var json = JsonSerializer.Serialize(request.Body);
@@ -42,10 +43,7 @@ namespace PortocolService
                     // Files
                     foreach (var file in request.Files)
                     {
-                        if (file.FileContent != null)
-                        {
-                            content.Add(new ByteArrayContent(file.FileContent), file.FileName);
-                        }
+                        content.Add(file.GetStreamContent, "file", file.FileName);
                     }
 
                     httpRequest.Content = content;
@@ -55,44 +53,59 @@ namespace PortocolService
                     var json = JsonSerializer.Serialize(request.Body);
                     httpRequest.Content = new StringContent(json, Encoding.UTF8, "application/json");
                 }
+            }
 
-                using var cts = new CancellationTokenSource(request.Timeout ?? TimeSpan.FromMinutes(3));
-                var response = await httpClient.SendAsync(httpRequest, cts.Token);
-                var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
+            using var cts = new CancellationTokenSource(request.Config.Timeout);
+            var response = await httpClient.SendAsync(httpRequest, cts.Token);
+            var responseContent = await response.Content.ReadAsStringAsync(cts.Token);
 
-                if (!response.IsSuccessStatusCode)
-                    return ResultFunctionHelper.Error<TResult>(null,$"Request failed: {responseContent}");
-
-                var data = JsonSerializer.Deserialize<TResult>(responseContent, new JsonSerializerOptions
+            if (!response.IsSuccessStatusCode)
+            {
+                return new UniResponse<TResult>
                 {
-                    PropertyNameCaseInsensitive = true
-                });
+                    StatusCode = int.Parse(response.StatusCode.ToString()),
+                    Success = false,
+                    Error = $"Request failed: {responseContent}"
+                };
+            }
 
-                return ResultFunctionHelper.Success(data);
-            }
-            catch (Exception ex)
+            var data = JsonSerializer.Deserialize<TResult>(responseContent, new JsonSerializerOptions
             {
-                return ResultFunctionHelper.Error<TResult>(null,$"Exception: {ex.Message}");
+                PropertyNameCaseInsensitive = true
+            });
+
+            var Meta = new Dictionary<string, object>();
+            foreach (var item in response.Headers)
+            {
+                Meta.Add(item.Key, item.Value);
             }
+
+            return new UniResponse<TResult>
+            {
+                StatusCode = int.Parse(response.StatusCode.ToString()),
+                Success = true,
+                Error = "",
+                Data = data,
+                Metadata = Meta
+            };
         }
 
-        public async Task<ResultFunction<byte[]>> DownloadData<TRequest>(RestRequest<TRequest> request) where TRequest : class
+        public async Task<UniResponse<byte[]>> DownloadData<TRequest>(RestRequest<TRequest> request) where TRequest : class
         {
-            try
+            var uri = BuildUri(request.BaseUrl, request.Parameters);
+            using var cts = new CancellationTokenSource(request.Config.Timeout);
+            var data = await httpClient.GetByteArrayAsync(uri, cts.Token);
+
+            return new UniResponse<byte[]>
             {
-                var uri = BuildUri(request.Endpoint, request.Paramet);
-                using var cts = new CancellationTokenSource(request.Timeout ?? TimeSpan.FromMinutes(3));
-                var data = await httpClient.GetByteArrayAsync(uri, cts.Token);
-                return ResultFunctionHelper.Success(data);
-            }
-            catch (Exception ex)
-            {
-                return ResultFunctionHelper.Error<byte[]>(null,$"Exception: {ex.Message}");
-            }
+                StatusCode = 200,
+                Success = true,
+                Error = "",
+                Data = data,
+            };
         }
 
-
-        private static string BuildUri(string baseUrl, IReadOnlyDictionary<string, string> queryParams)
+        private static string BuildUri(string baseUrl, IReadOnlyDictionary<string, object>? queryParams)
         {
             if (queryParams == null || !queryParams.Any())
                 return baseUrl;
@@ -100,7 +113,6 @@ namespace PortocolService
             var query = string.Join("&", queryParams.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value.ToString()!)}"));
             return $"{baseUrl}?{query}";
         }
-
     }
 
 }
