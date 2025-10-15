@@ -1,5 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using UniAPI;
+﻿using UniAPI;
 using UniAPI.Test;
 using UniAPI.UniAPI;
 
@@ -8,29 +7,45 @@ Console.WriteLine("Hello, World!");
 
 var api = new UniApiClient();
 
-var config = new UniRequestConfig<Person,object>
+var config = new UniRequestConfig
 {
-    BaseUrl = "https://api.sirshoo.com/",
-    OnError = Error,
-    OnResult = Result
+    BaseUrl = "http://localhost:28268"
 };
 
-var result = api.Get(new UniRequest<Person,object>
+var result = await api.Get(new UniRequest<DocumentationLists, DocumentationList>
 {
-    Protocol = ApiProtocol.Rest,
-    PathOrQuery = "api/App/GetFoodList",
-    Config = config
+    Protocol = ApiProtocol.GraphQL,
+    PathOrQuery = "/portal/graphql/",
+    Config = config,
+    Body = new DocumentationList()
 });
 
 Console.WriteLine(result);
 Console.ReadKey();
 
-void Error(UniRequest<Person,object> v1,int v2, string v3)
+public class DocumentationItem
 {
-    Console.WriteLine("Test");
+    public string Name { get; set; } = "";
 }
 
-void Result(UniResponse<Person> v1, int v2, string v3)
+public class DocumentationData
 {
-    Console.WriteLine("Test");
+    public List<DocumentationItem> Items { get; set; } = new();
+}
+
+public class DocumentationLists
+{
+    public DocumentationData Data { get; set; } = new();
+    public string Message { get; set; } = "";
+}
+
+// Wrapper برای GraphQL
+public class GraphQLDocumentationListResponse
+{
+    public DocumentationList Documentation_List { get; set; } = new();
+}
+
+public class DocumentationList
+{
+    // اگر input فیلد داشت، اینجا properties اضافه می‌شد
 }

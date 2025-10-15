@@ -42,16 +42,6 @@ namespace UniAPI
         /// If true, request and response details will be logged
         /// </summary>
         public bool EnableLogging { get; set; } = false;
-
-        /// <summary>
-        /// Callback to handle errors or logging data
-        /// - Parameter 1: the UniRequest object
-        /// - Parameter 2: Status code (HTTP or mapped)
-        /// - Parameter 3: Error message or response body
-        /// </summary>
-        public Action<UniRequest<TResponse, TRequest>, int, string>? OnError { get; set; }
-
-        public Action<UniResponse<TResponse>,int,string>? OnResult { get; set; }
     }
 
 
@@ -94,13 +84,33 @@ namespace UniAPI
         /// If true, request and response details will be logged
         /// </summary>
         public bool EnableLogging { get; set; } = false;
+    }
+
+    public class UniRequestConfig
+    {
+        /// <summary>
+        /// Base URL default for requests
+        /// </summary>
+        public string? BaseUrl { get; set; }
 
         /// <summary>
-        /// Callback to handle errors or logging data
-        /// - Parameter 1: the UniRequest object
-        /// - Parameter 2: Status code (HTTP or mapped)
-        /// - Parameter 3: Error message or response body
+        /// Maximum time to wait for a response
         /// </summary>
-        public Action<UniRequest<TRequest>, int, string>? OnError { get; set; }
+        public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Number of retries in case of failure
+        /// </summary>
+        public int RetryCount { get; set; } = 0;
+
+        /// <summary>
+        /// Delay between retries
+        /// </summary>
+        public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// If true, request and response details will be logged
+        /// </summary>
+        public bool EnableLogging { get; set; } = false;
     }
 }

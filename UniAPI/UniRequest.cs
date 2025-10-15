@@ -22,15 +22,11 @@
             /// </summary>
             public required ApiProtocol Protocol { get; set; } = ApiProtocol.Rest;
 
-
             /// <summary>
             /// Base URL of the server (e.g., https://api.example.com)
             /// Required if Config.BaseUrl is not provided.
             /// </summary>
             public string BaseUrl { get; set; }
-
-
-
 
             /// <summary>
             /// Path or Query string
@@ -69,7 +65,23 @@
             /// <summary>
             /// Request configuration (Timeout, Retry, Logging, etc.)
             /// </summary>
-            public UniRequestConfig<TRequest>? Config { get; set; }
+            public UniRequestConfig? Config { get; set; }
+
+            /// <summary>
+            /// Callback to handle errors or logging data
+            /// - Parameter 1: the UniRequest object
+            /// - Parameter 2: Status code (HTTP or mapped)
+            /// - Parameter 3: Error message or response body
+            /// </summary>
+            public Action<UniRequest<TRequest>, int, string>? OnError { get; set; }
+
+            /// <summary>
+            /// Callback to handle Result or logging data
+            /// - Parameter 1: the UniRequest object
+            /// - Parameter 2: Status code (HTTP or mapped)
+            /// - Parameter 3: Error message or response body
+            /// </summary>
+            public Action<UniResponse<TRequest>, int, string>? OnResult { get; set; }
         }
 
 
@@ -94,15 +106,11 @@
             /// </summary>
             public required ApiProtocol Protocol { get; set; } = ApiProtocol.Rest;
 
-
             /// <summary>
             /// Base URL of the server (e.g., https://api.example.com)
             /// Required if Config.BaseUrl is not provided.
             /// </summary>
             public string BaseUrl { get; set; }
-
-
-
 
             /// <summary>
             /// Path or Query string
@@ -141,7 +149,24 @@
             /// <summary>
             /// Request configuration (Timeout, Retry, Logging, etc.)
             /// </summary>
-            public UniRequestConfig<TResponse,TRequest>? Config { get; set; }
+            public UniRequestConfig? Config { get; set; }
+
+            /// <summary>
+            /// Callback to handle errors or logging data
+            /// - Parameter 1: the UniRequest object
+            /// - Parameter 2: Status code (HTTP or mapped)
+            /// - Parameter 3: Error message or response body
+            /// </summary>
+            public Action<UniRequest<TResponse,TRequest>, int, string>? OnError { get; set; }
+
+            /// <summary>
+            /// Callback to handle Result or logging data
+            /// - Parameter 1: the UniRequest object
+            /// - Parameter 2: Status code (HTTP or mapped)
+            /// - Parameter 3: Error message or response body
+            /// </summary>
+            public Action<UniResponse<TResponse>, int, string>? OnResult { get; set; }
         }
+
     }
 }
