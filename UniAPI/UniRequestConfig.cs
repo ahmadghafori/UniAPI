@@ -49,7 +49,7 @@ namespace UniAPI
         /// - Parameter 2: Status code (HTTP or mapped)
         /// - Parameter 3: Error message or response body
         /// </summary>
-        public Action<UniRequest<TRequest>, int, string>? OnError { get; set; }
+        public Action<UniRequest<TResponse, TRequest>, int, string>? OnError { get; set; }
 
         public Action<UniResponse<TResponse>,int,string>? OnResult { get; set; }
     }

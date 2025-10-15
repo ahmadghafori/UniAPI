@@ -82,7 +82,7 @@ namespace PortocolService
 
             return new UniResponse<TResult>
             {
-                StatusCode = int.Parse(response.StatusCode.ToString()),
+                StatusCode = (int)response.StatusCode,
                 Success = true,
                 Error = "",
                 Data = data,

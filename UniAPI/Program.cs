@@ -25,7 +25,7 @@ var result = api.Get(new UniRequest<Person,object>
 Console.WriteLine(result);
 Console.ReadKey();
 
-void Error(UniRequest<object> v1,int v2, string v3)
+void Error(UniRequest<Person,object> v1,int v2, string v3)
 {
     Console.WriteLine("Test");
 }

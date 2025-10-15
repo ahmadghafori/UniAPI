@@ -2,8 +2,13 @@
 {
     public class Person
     {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Family { get; set; }
+        public int erroCode { get; set; }
+        public string systemMessage { get; set; }
+        public List<object> data { get; set; }
+    }
+
+    public class P
+    {
+
     }
 }
